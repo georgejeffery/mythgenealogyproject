@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :relationships
   resources :person_tags
   resources :tags
   resources :people
