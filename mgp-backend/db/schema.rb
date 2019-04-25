@@ -18,13 +18,13 @@ ActiveRecord::Schema.define(version: 2019_04_25_112211) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "person_tags", id: false, force: :cascade do |t|
+  create_table "people_tags", id: false, force: :cascade do |t|
     t.integer "tag_id"
     t.integer "person_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["person_id"], name: "index_person_tags_on_person_id"
-    t.index ["tag_id"], name: "index_person_tags_on_tag_id"
+    t.index ["person_id"], name: "index_people_tags_on_person_id"
+    t.index ["tag_id"], name: "index_people_tags_on_tag_id"
   end
 
   create_table "tags", force: :cascade do |t|
