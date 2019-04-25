@@ -38,6 +38,16 @@ class Person < ApplicationRecord
     Parent.create(parent:self, child:person)
   end
 
+  def relationships
+    r = self.children
+    relations = []
+    r.each do |child|
+      p = child.parents.select{|parent| parent != self}
+      relations.push(p)
+    end
+    relations
+  end
 
+  
 
 end
