@@ -2,15 +2,9 @@ class Person < ApplicationRecord
 
   has_and_belongs_to_many :tags
 
-    # source: :follower matches with the belong_to :follower identification in the Follow model 
-  
-  # follower_follows "names" the Follow join table for accessing through the follower association
   has_many :children_parents, foreign_key: :parent_id, class_name: "Parent"
   has_many :children, through: :children_parents, source: :child
 
-  # source: :followee matches with the belong_to :followee identification in the Follow model 	
-  
-  # followee_follows "names" the Follow join table for accessing through the followee association
   has_many :parent_children, foreign_key: :child_id, class_name: "Parent"
   has_many :parents, through: :parent_children, source: :parent
 
@@ -20,6 +14,14 @@ class Person < ApplicationRecord
 
   def mothers
     self.parents.select{|parent| parent.gender == "F"}
+  end
+
+  def grandparents
+    gp = []
+    self.parents.each do |parent|
+      gp.push(parent.parents)
+    end
+    gp
   end
 
   def daughters
@@ -48,6 +50,6 @@ class Person < ApplicationRecord
     relations
   end
 
-  
+
 
 end
