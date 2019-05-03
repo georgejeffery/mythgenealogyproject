@@ -1,107 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-
-    <title>Collapsible Tree Example</title>
-
-    <style>
-
- .node circle {
-   fill: #fff;
-   stroke: steelblue;
-   stroke-width: 3px;
- }
-
- .node text { font: 12px sans-serif; }
-
- .link {
-   fill: none;
-   stroke: #ccc;
-   stroke-width: 2px;
- }
- 
-    </style>
-
-  </head>
-
-  <body>
-
-<!-- load the d3.js library --> 
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="https://d3js.org/d3-hierarchy.v1.min.js"></script>
- 
+<meta charset="utf-8">
+<style>
+    body {font-family: 'Architects Daughter', cursive;}
+</style>
+<svg width="960" height="600"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<link href="https://fonts.googleapis.com/css?family=Architects+Daughter" rel="stylesheet">
 <script>
 
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
 
-// ************** Generate the tree diagram  *****************
-var margin = {top: 20, right: 120, bottom: 20, left: 120},
- width = 960 - margin.right - margin.left,
- height = 500 - margin.top - margin.bottom;
- 
-var i = 0;
+var simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) { return d.id; }))
+    .force("charge", d3.forceManyBody().strength(-400))
+    .force("center", d3.forceCenter(width / 2, height / 2));
 
-var tree = d3.layout.cluster()
- .size([height, width]);
 
-var diagonal = d3.svg.diagonal()
- .projection(function(d) { return [d.y, d.x]; });
+d3.json("people.json", function(error, graph) {
+  if (error) throw error;
+  
+  graph.links.forEach(function(d){
+    d.source = d.source;    
+    d.target = d.target;
+  });           
 
-var svg = d3.select("body").append("svg")
- .attr("width", width + margin.right + margin.left)
- .attr("height", height + margin.top + margin.bottom)
-  .append("g")
- .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  var link = svg.append("g")
+                .style("stroke", "#aaa")
+                .selectAll("line")
+                .data(graph.links)
+                .enter().append("line");
 
-d3.json('api/v1/people', function(error, people){
-    root = people[5]
-    update(root)
+  var node = svg.append("g")
+            .attr("class", "nodes")
+  .selectAll("circle")
+            .data(graph.nodes)
+  .enter().append("circle")
+          .attr("r", 6)
+          .call(d3.drag()
+              .on("start", dragstarted)
+              .on("drag", dragged)
+              .on("end", dragended));
+  
+  var label = svg.append("g")
+      .attr("class", "labels")
+      .selectAll("text")
+      .data(graph.nodes)
+      .enter().append("text")
+        .attr("class", "label")
+        .text(function(d) { return d.name; });
+
+  simulation
+      .nodes(graph.nodes)
+      .on("tick", ticked);
+
+  simulation.force("link")
+      .links(graph.links);
+
+  function ticked() {
+    link
+        .attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node
+         .attr("r", 20)
+         .style("fill", "#d9d9d9")
+         .style("stroke", "#969696")
+         .style("stroke-width", "1px")
+         .attr("cx", function (d) { return d.x+6; })
+         .attr("cy", function(d) { return d.y-6; });
+    
+    label
+    		.attr("x", function(d) { return d.x; })
+            .attr("y", function (d) { return d.y; })
+            .style("font-size", "20px").style("fill", "#4393c3");
+  }
 });
 
-function update(source) {
+function dragstarted(d) {
+  if (!d3.event.active) simulation.alphaTarget(0.3).restart()
+  simulation.fix(d);
+}
 
-  // Compute the new tree layout.
-  var nodes = tree.nodes(root).reverse(),
-   links = tree.links(nodes);
+function dragged(d) {
+  simulation.fix(d, d3.event.x, d3.event.y);
+}
 
-  // Normalize for fixed-depth.
-  nodes.forEach(function(d) { d.y = d.depth * 180; });
-
-  // Declare the nodesâ€¦
-  var node = svg.selectAll("g.node")
-   .data(nodes, function(d) { return d.id || (d.id = ++i); });
-
-  // Enter the nodes.
-  var nodeEnter = node.enter().append("g")
-   .attr("class", "node")
-   .attr("transform", function(d) { 
-    return "translate(" + d.y + "," + d.x + ")"; });
-
-  nodeEnter.append("circle")
-   .attr("r", 10)
-   .style("fill", "#fff");
-
-  nodeEnter.append("text")
-   .attr("x", function(d) { 
-    return d.children || d._children ? -13 : 13; })
-   .attr("dy", ".35em")
-   .attr("text-anchor", function(d) { 
-    return d.children || d._children ? "end" : "start"; })
-   .text(function(d) { return d.name; })
-   .style("fill-opacity", 1);
-
-  // Declare the linksâ€¦
-  var link = svg.selectAll("path.link")
-   .data(links, function(d) { return d.target.id; });
-
-  // Enter the links.
-  link.enter().insert("path", "g")
-   .attr("class", "link")
-   .attr("d", diagonal);
-
+function dragended(d) {
+  if (!d3.event.active) simulation.alphaTarget(0);
+  simulation.unfix(d);
 }
 
 </script>
- 
-  </body>
-</html>
